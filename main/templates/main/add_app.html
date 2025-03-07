@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add App - Admin Panel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 20px;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .card-header {
+            background-color: #6c757d;
+            color: white;
+            border-radius: 10px 10px 0 0 !important;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-primary:hover {
+            background-color: #0069d9;
+            border-color: #0062cc;
+        }
+        .form-control:focus {
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+        .navbar {
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">Admin Panel</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/custom-admin/dashboard/">Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/custom-admin/add-app/">Add App</a>
+                        </li>
+                    </ul>
+                    <button id="logout-btn" class="btn btn-outline-light">Logout</button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="mb-0">Add New App</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="message" class="alert alert-success d-none">App added successfully!</div>
+                        <div id="error-message" class="alert alert-danger d-none">Error adding app. Please try again.</div>
+                        
+                        <form id="add-app-form">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">App Name</label>
+                                <input type="text" class="form-control" id="name" name="name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="package_name" class="form-label">Package Name</label>
+                                <input type="text" class="form-control" id="package_name" name="package_name" required>
+                                <div class="form-text">Example: com.example.appname</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="category" class="form-label">Category</label>
+                                <select class="form-select" id="category" name="category">
+                                    <option value="">Select a category</option>
+                                    <option value="Games">Games</option>
+                                    <option value="Productivity">Productivity</option>
+                                    <option value="Social">Social</option>
+                                    <option value="Education">Education</option>
+                                    <option value="Entertainment">Entertainment</option>
+                                    <option value="Utilities">Utilities</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="points" class="form-label">Points</label>
+                                <input type="number" class="form-control" id="points" name="points" value="0" min="0">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Add App</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is logged in
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                window.location.href = '/custom-admin/login/';
+                return;
+            }
+            
+            // Logout functionality
+            document.getElementById('logout-btn').addEventListener('click', function() {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('refresh_token');
+                window.location.href = '/custom-admin/login/';
+            });
+            
+            document.getElementById('add-app-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const name = document.getElementById('name').value;
+                const package_name = document.getElementById('package_name').value;
+                const category = document.getElementById('category').value;
+                const points = document.getElementById('points').value;
+                
+                const appData = {
+                    name: name,
+                    package_name: package_name,
+                    category: category,
+                    points: parseInt(points)
+                };
+                
+                fetch('http://127.0.0.1:8000/api/apps/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(appData)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(errorData => {
+                            throw new Error(JSON.stringify(errorData));
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Success:', data);
+                    document.getElementById('message').classList.remove('d-none');
+                    document.getElementById('error-message').classList.add('d-none');
+                    document.getElementById('add-app-form').reset();
+                    
+                    // Hide success message after 3 seconds
+                    setTimeout(() => {
+                        document.getElementById('message').classList.add('d-none');
+                    }, 3000);
+                    
+                    // Redirect to dashboard after successful creation
+                    setTimeout(() => {
+                        window.location.href = '/custom-admin/dashboard/';
+                    }, 1500);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    let errorMessage = 'Error adding app. Please try again.';
+                    
+                    try {
+                        const errorData = JSON.parse(error.message);
+                        if (errorData) {
+                            errorMessage = 'Error: ';
+                            for (const [key, value] of Object.entries(errorData)) {
+                                errorMessage += `${key}: ${value.join(', ')}; `;
+                            }
+                        }
+                    } catch (e) {
+                        // Use default error message
+                    }
+                    
+                    const errorElement = document.getElementById('error-message');
+                    errorElement.textContent = errorMessage;
+                    errorElement.classList.remove('d-none');
+                    document.getElementById('message').classList.add('d-none');
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

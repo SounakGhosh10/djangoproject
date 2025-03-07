@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Tasks Platform</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 50px;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            transition: transform 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .card-header {
+            border-radius: 10px 10px 0 0 !important;
+        }
+        .admin-card .card-header {
+            background-color: #6c757d;
+            color: white;
+        }
+        .user-card .card-header {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-primary:hover {
+            background-color: #0069d9;
+            border-color: #0062cc;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+            border-color: #545b62;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="text-center mb-5">
+            <h1 class="display-4">App Tasks Platform</h1>
+            <p class="lead">Complete tasks and earn points by using apps</p>
+        </div>
+        
+        <div class="row justify-content-center">
+            <div class="col-md-5">
+                <div class="card user-card">
+                    <div class="card-header">
+                        <h3 class="mb-0">User Portal</h3>
+                    </div>
+                    <div class="card-body">
+                        <p>Complete tasks by using apps and earn points.</p>
+                        <a href="/user/login/" class="btn btn-primary w-100">User Login</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-5">
+                <div class="card admin-card">
+                    <div class="card-header">
+                        <h3 class="mb-0">Admin Portal</h3>
+                    </div>
+                    <div class="card-body">
+                        <p>Manage apps, review tasks, and monitor user activity.</p>
+                        <a href="/custom-admin/login/" class="btn btn-secondary w-100">Admin Login</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

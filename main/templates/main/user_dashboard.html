@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 20px;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            transition: transform 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .card-header {
+            background-color: #007bff;
+            color: white;
+            border-radius: 10px 10px 0 0 !important;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-primary:hover {
+            background-color: #0069d9;
+            border-color: #0062cc;
+        }
+        .navbar {
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .points-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #28a745;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        .app-card {
+            height: 100%;
+        }
+        .user-info {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">User Dashboard</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/user/dashboard/">Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/user/tasks/">My Tasks</a>
+                        </li>
+                    </ul>
+                    <button id="logout-btn" class="btn btn-outline-light">Logout</button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="user-info">
+            <div class="row">
+                <div class="col-md-6">
+                    <h4 id="username">Welcome, <span id="user-name">User</span>!</h4>
+                </div>
+                <div class="col-md-6 text-end">
+                    <h4>Total Points: <span id="total-points" class="badge bg-success">0</span></h4>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="mb-4">Available Apps</h2>
+        
+        <div id="loading" class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p>Loading apps...</p>
+        </div>
+        
+        <div id="error-message" class="alert alert-danger d-none">Error loading apps. Please try again.</div>
+        <div id="no-apps" class="alert alert-info d-none">No apps available at the moment. Please check back later.</div>
+        
+        <div class="row" id="apps-container">
+            <!-- Apps will be loaded here -->
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is logged in
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                window.location.href = '/user/login/';
+                return;
+            }
+            
+            // Logout functionality
+            document.getElementById('logout-btn').addEventListener('click', function() {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('refresh_token');
+                window.location.href = '/user/login/';
+            });
+            
+            // Load user info
+            fetch('/api/users/me/', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('user-name').textContent = data.username;
+                document.getElementById('total-points').textContent = data.points;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+            
+            // Load user's tasks to check which apps are completed
+            let userTasks = [];
+            fetch('/api/tasks/', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                userTasks = data;
+                // Now load apps after we have the tasks
+                loadApps();
+            })
+            .catch(error => {
+                console.error('Error loading tasks:', error);
+                // If we can't load tasks, still try to load apps
+                loadApps();
+            });
+            
+            // Function to load apps
+            function loadApps() {
+                fetch('/api/apps/', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById('loading').classList.add('d-none');
+                    
+                    if (data.length === 0) {
+                        document.getElementById('no-apps').classList.remove('d-none');
+                    } else {
+                        const appsContainer = document.getElementById('apps-container');
+                        
+                        data.forEach(app => {
+                            // Check if user has completed this app
+                            const completedTask = userTasks.find(task => 
+                                task.app.id === app.id && 
+                                (task.status === 'COMPLETED' || task.status === 'PENDING')
+                            );
+                            
+                            const isCompleted = !!completedTask;
+                            const taskStatus = completedTask ? completedTask.status : null;
+                            
+                            const col = document.createElement('div');
+                            col.className = 'col-md-4 mb-4';
+                            
+                            let buttonHtml = '';
+                            if (isCompleted) {
+                                if (taskStatus === 'COMPLETED') {
+                                    buttonHtml = `<button class="btn btn-success w-100" disabled>Completed (+${app.points} Points)</button>`;
+                                } else {
+                                    buttonHtml = `<button class="btn btn-warning w-100" disabled>Pending Approval</button>`;
+                                }
+                            } else {
+                                buttonHtml = `<a href="/user/submit-task/${app.id}/" class="btn btn-primary w-100">Complete Task</a>`;
+                            }
+                            
+                            col.innerHTML = `
+                                <div class="card app-card">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">${app.name}</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="points-badge">${app.points} Points</div>
+                                        <p><strong>Package:</strong> ${app.package_name}</p>
+                                        <p><strong>Category:</strong> ${app.category || 'Uncategorized'}</p>
+                                        ${buttonHtml}
+                                    </div>
+                                </div>
+                            `;
+                            
+                            appsContainer.appendChild(col);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('loading').classList.add('d-none');
+                    document.getElementById('error-message').classList.remove('d-none');
+                });
+            }
+        });
+    </script>
+</body>
+</html> 
